@@ -15,9 +15,11 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "combine": "node combine.js"
   },
   "devDependencies": {
+    "@types/node": "^24.7.2",
+    "ts-morph": "^27.0.2",
     "typescript": "^5.9.3"
   }
 }
