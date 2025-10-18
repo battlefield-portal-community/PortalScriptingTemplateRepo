@@ -16,8 +16,8 @@
   "main": "index.js",
   "scripts": {
     "build": "node ./esbuild.config.mjs",
-    "dev": "node ./esbuild.config.mjs"
-
+    "dev": "node ./esbuild.config.mjs",
+    "watch": "node ./esbuild.config.mjs --watch"
   },
   "devDependencies": {
     "esbuild": "0.25.11",
