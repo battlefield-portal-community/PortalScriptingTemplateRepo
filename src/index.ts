@@ -1,4 +1,4 @@
-import * as modlib from 'modlib';
+import * as modlib from './modlib';
 
 let init = false;
 
