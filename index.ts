@@ -1,18 +1,19 @@
 import * as modlib from 'modlib';
 
-function OngoingGlobal_New_Rule(conditionState: any) {
-	let newState = true;
-	if (!conditionState.update(newState)) {
-	 return;
-}
-	mod.DisplayCustomNotificationMessage(mod.Message("Hello World"),mod.CustomNotificationSlots.HeaderText,0)
+let init = false;
+
+function helloWorld(): void {
+	// you can view these logs at 
+	// %LOCALAPPDATA%\Temp\Battlefieldâ„¢ 6
+	console.log("Hello World")
 }
 
 
 export function OngoingGlobal() {
-const eventInfo = {};
-let eventNum = 0;
-  OngoingGlobal_New_Rule(modlib.getGlobalCondition(eventNum++));
+	if (!init) {
+		helloWorld();
+	}
+	init = true;
 }
 
 
