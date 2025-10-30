@@ -1,3 +1,13 @@
+// BEGIN non-official types
+type Optional<T> = T | null | undefined;
+// where used, certain attributes will get default values of "" or 0 or vector(0,0,0) etc. if not defined
+type DefaultUIParams = Pick<UIParams, 'name' | 'position' | 'size' | 'anchor' | 'parent' | 'visible' | 'padding' | 'bgColor' | 'bgAlpha' | 'bgFill'>
+type DefaultUIButtonParams = Pick<UIParams, 'buttonEnabled' | 'buttonColorBase' | 'buttonAlphaBase' | 'buttonColorDisabled' | 'buttonAlphaDisabled' | 'buttonColorPressed' | 'buttonAlphaPressed' | 'buttonColorHover' | 'buttonAlphaHover' | 'buttonColorFocused' | 'buttonAlphaFocused'>;
+type DefaultUIImageParams = Pick<UIParams, 'imageType' | 'imageColor' | 'imageAlpha'>;
+type DefaultUITextParams = Pick<UIParams, 'textLabel' | 'textSize' | 'textColor' | 'textAlpha' | 'textAnchor'>;
+// END non-official types
+
+
 // export * from './store';
 
 export function Concat(s1: string, s2: string) {
@@ -30,7 +40,7 @@ export function getTeamId(team: mod.Team): number {
     return mod.GetObjId(team);
 }
 
-export function ConvertArray(array: mod.Array): any[] {
+export function ConvertArray<T = any>(array: mod.Array<T>): T[] {
     let v = [];
     let n = mod.CountOf(array);
     for (let i = 0; i < n; i++) {
@@ -40,18 +50,19 @@ export function ConvertArray(array: mod.Array): any[] {
     return v;
 }
 
-export function FilteredArray(array: mod.Array, cond: (currentElement: any) => boolean): mod.Array {
+// note: the officially provided helper for this does not work as AppendToArray does not mutate the original array
+export function FilteredArray<T = any>(array: mod.Array<T>, cond: (currentElement: T) => boolean): mod.Array<T> {
     const arr = ConvertArray(array);
     let v = mod.EmptyArray();
     let n = arr.length;
     for (let i = 0; i < n; i++) {
         let currentElement = arr[i];
-        if (cond(currentElement)) mod.AppendToArray(v, currentElement);
+        if (cond(currentElement)) v = mod.AppendToArray(v, currentElement);
     }
     return v;
 }
 
-export function IndexOfFirstTrue(array: mod.Array, cond: (element: any, arg: any) => boolean, arg: any = null): number {
+export function IndexOfFirstTrue<T = any, K extends any = null>(array: mod.Array<T>, cond: (element: T, arg: Optional<K>) => boolean, arg: Optional<K>): number {
     const arr = ConvertArray(array);
     let n = arr.length;
     for (let i = 0; i < n; i++) {
@@ -66,7 +77,7 @@ export function IfThenElse<T>(condition: boolean, ifTrue: () => T, ifFalse: () =
     else return ifFalse();
 }
 
-export function IsTrueForAll(array: mod.Array, condition: (element: any, arg: any) => boolean, arg: any = null) {
+export function IsTrueForAll<T = any, K extends any = null>(array: mod.Array<T>, condition: (element: T, arg: Optional<K>) => boolean, arg: Optional<K> = null) {
     const arr = ConvertArray(array);
     let n = arr.length;
     for (let i = 0; i < n; i++) {
@@ -76,7 +87,7 @@ export function IsTrueForAll(array: mod.Array, condition: (element: any, arg: an
     return true;
 }
 
-export function IsTrueForAny(array: mod.Array, condition: (element: any, arg: any) => boolean, arg: any = null) {
+export function IsTrueForAny<T = any, K extends any = null>(array: mod.Array<T>, condition: (element: T, arg: Optional<K>) => boolean, arg: Optional<K> = null) {
     const arr = ConvertArray(array);
     let n = arr.length;
     for (let i = 0; i < n; i++) {
@@ -86,7 +97,7 @@ export function IsTrueForAny(array: mod.Array, condition: (element: any, arg: an
     return false;
 }
 
-export function SortedArray(array: any[], compare: (a: any, b: any) => number) {
+export function SortedArray<T = any>(array: T[], compare: (a: T, b: T) => number) {
     let v1 = array.slice();
     v1.sort(compare);
     let v2 = [];
@@ -94,7 +105,7 @@ export function SortedArray(array: any[], compare: (a: any, b: any) => number) {
     return v2;
 }
 
-export function Equals(a: any, b: any) {
+export function Equals<T = any, K = any>(a: T, b: K) {
     if (a == null || b == null) debugger;
     return mod.Equals(a, b);
 }
@@ -266,7 +277,7 @@ function __asModMessage(param: string | mod.Message) {
     return param;
 }
 
-function __fillInDefaultArgs(params: UIParams) {
+function __fillInDefaultArgs(params: Partial<UIParams>): asserts params is Partial<UIParams> & DefaultUIParams {
     if (!params.hasOwnProperty('name')) params.name = '';
     if (!params.hasOwnProperty('position')) params.position = mod.CreateVector(0, 0, 0);
     if (!params.hasOwnProperty('size')) params.size = mod.CreateVector(100, 100, 0);
@@ -279,7 +290,7 @@ function __fillInDefaultArgs(params: UIParams) {
     if (!params.hasOwnProperty('bgFill')) params.bgFill = mod.UIBgFill.Solid;
 }
 
-function __setNameAndGetWidget(uniqueName: any, params: any) {
+function __setNameAndGetWidget(uniqueName: string, params: Partial<UIParams> & Pick<UIParams, 'name'>) {
     let widget = mod.FindUIWidgetWithName(uniqueName) as mod.UIWidget;
     mod.SetUIWidgetName(widget, params.name);
     return widget;
@@ -287,7 +298,7 @@ function __setNameAndGetWidget(uniqueName: any, params: any) {
 
 const __cUniqueName = '----uniquename----';
 
-function __addUIContainer(params: UIParams) {
+function __addUIContainer(params: Partial<UIParams>) {
     __fillInDefaultArgs(params);
     let restrict = params.teamId ?? params.playerId;
     if (restrict) {
@@ -320,7 +331,7 @@ function __addUIContainer(params: UIParams) {
     }
     let widget = __setNameAndGetWidget(__cUniqueName, params);
     if (params.children) {
-        params.children.forEach((childParams: any) => {
+        params.children.forEach((childParams: Partial<UIParams>) => {
             childParams.parent = widget;
             __addUIWidget(childParams);
         });
@@ -328,7 +339,7 @@ function __addUIContainer(params: UIParams) {
     return widget;
 }
 
-function __fillInDefaultTextArgs(params: UIParams) {
+function __fillInDefaultTextArgs(params: Partial<UIParams>): asserts params is Partial<UIParams> & DefaultUITextParams {
     if (!params.hasOwnProperty('textLabel')) params.textLabel = '';
     if (!params.hasOwnProperty('textSize')) params.textSize = 0;
     if (!params.hasOwnProperty('textColor')) params.textColor = mod.CreateVector(1, 1, 1);
@@ -336,9 +347,13 @@ function __fillInDefaultTextArgs(params: UIParams) {
     if (!params.hasOwnProperty('textAnchor')) params.textAnchor = mod.UIAnchor.CenterLeft;
 }
 
-function __addUIText(params: UIParams) {
+function __fillInDefaultUIText(params: Partial<UIParams>): asserts params is Partial<UIParams> & DefaultUIParams & DefaultUITextParams {
     __fillInDefaultArgs(params);
     __fillInDefaultTextArgs(params);
+}
+
+function __addUIText(params: Partial<UIParams>) {
+    __fillInDefaultUIText(params);
     let restrict = params.teamId ?? params.playerId;
     if (restrict) {
         mod.AddUIText(
@@ -381,15 +396,19 @@ function __addUIText(params: UIParams) {
     return __setNameAndGetWidget(__cUniqueName, params);
 }
 
-function __fillInDefaultImageArgs(params: any) {
+function __fillInDefaultImageArgs(params: Partial<UIParams>): asserts params is Partial<UIParams> & DefaultUIImageParams {
     if (!params.hasOwnProperty('imageType')) params.imageType = mod.UIImageType.None;
     if (!params.hasOwnProperty('imageColor')) params.imageColor = mod.CreateVector(1, 1, 1);
     if (!params.hasOwnProperty('imageAlpha')) params.imageAlpha = 1;
 }
 
-function __addUIImage(params: UIParams) {
+function __addUIImageDefaultArgs(params: Partial<UIParams>): asserts params is Partial<UIParams> & DefaultUIParams & DefaultUIImageParams {
     __fillInDefaultArgs(params);
     __fillInDefaultImageArgs(params);
+}
+
+function __addUIImage(params: Partial<UIParams>) {
+    __addUIImageDefaultArgs(params);
     let restrict = params.teamId ?? params.playerId;
     if (restrict) {
         mod.AddUIImage(
@@ -428,11 +447,12 @@ function __addUIImage(params: UIParams) {
     return __setNameAndGetWidget(__cUniqueName, params);
 }
 
-function __fillInDefaultArg(params: any, argName: any, defaultValue: any) {
-    if (!params.hasOwnProperty(argName)) params[argName] = defaultValue;
+function __fillInDefaultArg<K extends keyof UIParams>(params: Partial<UIParams>, argName: K, defaultValue: UIParams[keyof UIParams]) {
+    const a =  params[argName];
+    if (!Object.prototype.hasOwnProperty.call(params, argName)) params[argName] = defaultValue;
 }
 
-function __fillInDefaultButtonArgs(params: any) {
+function __fillInDefaultButtonArgs(params: Partial<UIParams>): asserts params is Partial<UIParams> & DefaultUIButtonParams {
     if (!params.hasOwnProperty('buttonEnabled')) params.buttonEnabled = true;
     if (!params.hasOwnProperty('buttonColorBase')) params.buttonColorBase = mod.CreateVector(0.7, 0.7, 0.7);
     if (!params.hasOwnProperty('buttonAlphaBase')) params.buttonAlphaBase = 1;
@@ -446,9 +466,13 @@ function __fillInDefaultButtonArgs(params: any) {
     if (!params.hasOwnProperty('buttonAlphaFocused')) params.buttonAlphaFocused = 1;
 }
 
-function __addUIButton(params: UIParams) {
+function __addUIButtonDefaultArgs(params: Partial<UIParams>): asserts params is Partial<UIParams> & DefaultUIParams & DefaultUIButtonParams {
     __fillInDefaultArgs(params);
     __fillInDefaultButtonArgs(params);
+}
+
+function __addUIButton(params: Partial<UIParams>) {
+    __addUIButtonDefaultArgs(params);
     let restrict = params.teamId ?? params.playerId;
     if (restrict) {
         mod.AddUIButton(
@@ -503,7 +527,7 @@ function __addUIButton(params: UIParams) {
     return __setNameAndGetWidget(__cUniqueName, params);
 }
 
-function __addUIWidget(params: UIParams) {
+function __addUIWidget(params: Partial<UIParams>) {
     if (params == null) return undefined;
     if (params.type == 'Container') return __addUIContainer(params);
     else if (params.type == 'Text') return __addUIText(params);
@@ -512,10 +536,10 @@ function __addUIWidget(params: UIParams) {
     return undefined;
 }
 
-export function ParseUI(...params: any[]) {
+export function ParseUI(...params: Array<Partial<UIParams>>) {
     let widget: mod.UIWidget | undefined;
     for (let a = 0; a < params.length; a++) {
-        widget = __addUIWidget(params[a] as UIParams);
+        widget = __addUIWidget(params[a]);
     }
     return widget;
 }

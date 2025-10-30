@@ -17,7 +17,7 @@ declare namespace mod {
     // export type Array = never;
     // export type Array = Any;
     const ArraySymbol: unique symbol;
-    export type Array = { _opaque: typeof ArraySymbol };
+    export type Array<T = any> = { _opaque: typeof ArraySymbol };
 
     // export type CapturePoint = never;
     // export type CapturePoint = Any;
